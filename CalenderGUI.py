@@ -1,5 +1,4 @@
 from tkinter import *
-from functools import partial
 
 def callback(day):
     # print("oi")
@@ -25,22 +24,26 @@ def callback(day):
 
 def enterGoal(event, day):
 
-    with open('CalendarSaveData') as fin, open('test', 'w') as fout:
+    with open('CalendarSaveData') as fin, open('temp', 'w') as fout:
         s = event.get()
         print(s)
 
         counter = 0
         for line in fin:
-
+            # print("Executing loop")
             if day == counter:
                 output = s + "\n"
                 fout.write(output)
+                # print(output)
             else:
                 fout.write(line)
+                # print(line)
 
             counter += 1
 
-
+    with open('CalendarSaveData', 'w') as fout, open('temp') as fin:
+        for line in fin:
+            fout.write(line)
 
 def notcallback():
     print("lack of oi")
