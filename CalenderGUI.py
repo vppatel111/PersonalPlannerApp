@@ -2,23 +2,48 @@ from tkinter import *
 import calendar
 import time
 
-months = ["January", 31, 0, "Febuary", 28, 3, "March", 31, 3, "April", 30, 6]
+month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November",
+         "December"]
+
+currentMonth = 1
+
+currentYear = 2017
+calendar.setfirstweekday(calendar.SUNDAY)
+cal = calendar.Calendar()
+
+monthData = cal.monthdayscalendar(currentYear, currentMonth)
+
+#print(calendar.prmonth(2017, 1))
+#print(monthData)
+
+def weekAdjustment(colplaced):
+
+    colplaced += 1
+
+    if (colplaced == 7):
+        colplaced = 0
+
+    return colplaced
+
+
 def callback(day):
-    # print("oi")
+
     f = open('CalendarSaveData', 'r')
+    top = Toplevel()
 
     counter = 0
     for line in f:
         if day == counter:
+            previousEvent = Label(top, text=line)
+            previousEvent.grid(row=0, column=2)
             print(line)
         counter += 1
     # print(day)
 
-    top = Toplevel()
     event = Entry(top)
-    event.pack()
+    event.grid(row=0, column=1)
     enter = Button(top, text="Enter", command=lambda day=day, event=event: enterGoal(event, day))
-    enter.pack()
+    enter.grid(row=1, column=1)
     f.close()
 
 def enterGoal(event, day):
@@ -42,32 +67,39 @@ def enterGoal(event, day):
         for line in fin:
             fout.write(line)
 
-def notcallback():
-    print("lack of oi")
-
 def prevMonth():
-    print("does nothing")
-    global monthIndex
-    monthIndex -= 1
+    global currentMonth
+    global currentYear
+    currentMonth -= 1
 
-    month = months[monthIndex*3]
-    numDays = months[(monthIndex*3)+1]
-    startingDay = months[(monthIndex * 3) + 2]
-    changeMonth(month, numDays, startingDay)
+    if currentMonth < 1:
+        currentMonth = 12
+        currentYear -= 1
+
+
+    startingDay, numDays = calendar.monthrange(currentYear, currentMonth)
+    startingDay = weekAdjustment(startingDay)
+    changeMonth(currentMonth, numDays, startingDay, currentYear)
 
 def nextMonth():
-    print("Does nothing")
-    global monthIndex
-    monthIndex += 1
+    global currentMonth
+    global currentYear
+    currentMonth += 1
 
-    month = months[monthIndex * 3]
-    numDays = months[(monthIndex * 3) + 1]
-    startingDay = months[(monthIndex * 3) + 2]
-    changeMonth(month, numDays, startingDay)
+    if currentMonth > 12:
+        currentMonth = 1
+        currentYear += 1
 
-def changeMonth(month, numDays, startingDay):
+    startingDay, numDays = calendar.monthrange(currentYear, currentMonth)
+    startingDay = weekAdjustment(startingDay)
+    changeMonth(currentMonth, numDays, startingDay, currentYear)
 
-    monthTitle.config(text=month, font=("Helvetica", 16))
+def changeMonth(currentMonth, numDays, startingDay, currentYear):
+
+    global month
+
+    monthLabelString = month[currentMonth-1] + " " + str(currentYear)
+    monthTitle.config(text=monthLabelString, font=("Helvetica", 16))
 
     for i in range(len(day)):
         day[i].destroy()
@@ -78,9 +110,11 @@ def changeMonth(month, numDays, startingDay):
          day.append(Button(root, text=i + 1, command=lambda i=i: callback(i), height=5, width=8))
 
     counter = 0
+    flag = 0
     colplaced = startingDay
     for x in range(5):
         for y in range(7):
+            #print(counter)
             day[counter].grid(row=x + calendarRowShift, column=colplaced, padx=3, pady=3)
             counter += 1
             colplaced += 1
@@ -89,8 +123,12 @@ def changeMonth(month, numDays, startingDay):
                 colplaced = 0
                 x += 1
 
-            if counter == 31:
+            if counter == numDays:
+                #print("break" + str(counter))
+                flag = 1
                 break
+        if flag == 1:
+            break
 
 def tick():
     localtime = time.asctime(time.localtime(time.time()))
@@ -102,12 +140,9 @@ day = []
 calendarRowShift = 3
 lengthOfCalendar = 5
 widthOfCalendar = 7
-colStart = 0
 
-month = "January"
-monthIndex = 0
-
-monthTitle = Label(root, text=month, font=("Helvetica", 16))
+monthLabelString = month[currentMonth-1] + " " + str(currentYear)
+monthTitle = Label(root, text=monthLabelString, font=("Helvetica", 16))
 monthTitle.grid(row=1, column=1, columnspan=widthOfCalendar-2)
 
 currenttime = Label(root, text=time.asctime(time.localtime(time.time())), font=("Helvetica", 16))
@@ -137,11 +172,17 @@ saturday.grid(row=2, column=6)
 
 tick()
 
-for i in range(31):
+counter = 0
+colplaced, numDays = calendar.monthrange(currentYear, currentMonth)
+
+colplaced = weekAdjustment(colplaced)
+
+print("NumDays " + str(numDays))
+print("StartDay " + str(colplaced))
+
+for i in range(numDays):
     day.append(Button(root, text=i+1, command=lambda i=i: callback(i), height=5, width=8))
 
-counter = 0
-colplaced = colStart
 for x in range(5):
     for y in range(7):
         day[counter].grid(row=x+calendarRowShift, column=colplaced, padx=3, pady=3)
@@ -152,7 +193,7 @@ for x in range(5):
             colplaced = 0
             x += 1
 
-        if counter == 31:
+        if counter == numDays:
             break
 
 
