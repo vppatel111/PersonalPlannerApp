@@ -6,7 +6,6 @@ month = ["January", "February", "March", "April", "May", "June", "July", "August
          "December"]
 
 currentMonth = 1
-
 currentYear = 2017
 calendar.setfirstweekday(calendar.SUNDAY)
 cal = calendar.Calendar()
@@ -26,46 +25,72 @@ def weekAdjustment(colplaced):
     return colplaced
 
 
-def callback(day):
+def callback(day, currentMonth, currentYear):
 
     f = open('CalendarSaveData', 'r')
     top = Toplevel()
 
+    if currentMonth < 10:
+        currentMonthCode = "0" + str(currentMonth)
+    else:
+        currentMonthCode = str(currentMonth)
+
+    if (day+1) < 10:
+        dayCode = "0" + str(day+1)
+    else:
+        dayCode = str(day+1)
+
+    timeCode = currentMonthCode + "-" + dayCode + "-" + str(currentYear)
+    #print("timeCode" + str(timeCode))
+
     counter = 0
     for line in f:
-        if day == counter:
-            previousEvent = Label(top, text=line)
+        print(line[:10])
+        if timeCode == line[:10]:
+            #goalEntered = line[:11]
+            previousEvent = Label(top, text=line[11:])
             previousEvent.grid(row=0, column=2)
             print(line)
         counter += 1
-    # print(day)
+
+    #print(day)
+    #print(currentMonth)
+    #print(currentYear)
 
     event = Entry(top)
     event.grid(row=0, column=1)
-    enter = Button(top, text="Enter", command=lambda day=day, event=event: enterGoal(event, day))
+    enter = Button(top, text="Enter", command=lambda top=top, dayCode=dayCode, event=event, currentMonthCode=currentMonthCode, currentYear=currentYear: enterGoal(top, event, dayCode, currentMonthCode, currentYear))
     enter.grid(row=1, column=1)
+    top.mainloop()
     f.close()
 
-def enterGoal(event, day):
+def enterGoal(top, event, dayCode, currentMonthCode, currentYear):
 
     with open('CalendarSaveData') as fin, open('temp', 'w') as fout:
         s = event.get()
-        print(s)
-        counter = 0
+        #print(s)
+
+        lineWritten = 0
+        timeCode = currentMonthCode + "-" + dayCode + "-" + str(currentYear)
         for line in fin:
-            # print("Executing loop")
-            if day == counter:
-                output = s + "\n"
+            if timeCode == line[:10] and lineWritten == 0:
+                output = timeCode + ": " + s + "\n"
                 fout.write(output)
-                # print(output)
+                lineWritten = 1
+            elif line == "---" and lineWritten == 0:
+                output = timeCode + ": " + s + "\n"
+                fout.write(output)
+                fout.write("---")
+                lineWritten = 1
             else:
                 fout.write(line)
-                # print(line)
-            counter += 1
+
 
     with open('CalendarSaveData', 'w') as fout, open('temp') as fin:
         for line in fin:
             fout.write(line)
+
+    top.destroy()
 
 def prevMonth():
     global currentMonth
@@ -107,7 +132,8 @@ def changeMonth(currentMonth, numDays, startingDay, currentYear):
     del day[:]
 
     for i in range(numDays):
-         day.append(Button(root, text=i + 1, command=lambda i=i: callback(i), height=5, width=8))
+         day.append(Button(root, text=i + 1, command=lambda i=i, currentMonth=currentMonth, currentYear=currentYear:
+            callback(i, currentMonth, currentYear), height=5, width=8))
 
     counter = 0
     flag = 0
@@ -181,7 +207,8 @@ print("NumDays " + str(numDays))
 print("StartDay " + str(colplaced))
 
 for i in range(numDays):
-    day.append(Button(root, text=i+1, command=lambda i=i: callback(i), height=5, width=8))
+    day.append(Button(root, text=i + 1, command=lambda i=i, currentMonth=currentMonth, currentYear=currentYear:
+    callback(i, currentMonth, currentYear), height=5, width=8))
 
 for x in range(5):
     for y in range(7):
