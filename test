@@ -1,4 +1,10 @@
-why
-gg
-it
-empty
+["Samual", "Manual"]["Samual", "Manual"]
+
+babies = ["Samual", "Manual"]
+with open('test', 'w') as fout:
+    json.dump(babies, fout)
+    json.dump(babies, fout)
+
+with open('test') as fin:
+    x = json.load(fin)
+    print(x)

@@ -1,6 +1,7 @@
 from tkinter import *
 import calendar
 import time
+import json
 
 month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November",
          "December"]
@@ -24,11 +25,7 @@ def weekAdjustment(colplaced):
 
     return colplaced
 
-
-def callback(day, currentMonth, currentYear):
-
-    f = open('CalendarSaveData', 'r')
-    top = Toplevel()
+def convertDateToCode(currentMonth, day, currentYear):
 
     if currentMonth < 10:
         currentMonthCode = "0" + str(currentMonth)
@@ -41,6 +38,22 @@ def callback(day, currentMonth, currentYear):
         dayCode = str(day+1)
 
     timeCode = currentMonthCode + "-" + dayCode + "-" + str(currentYear)
+
+    return timeCode
+
+
+def callback(day, currentMonth, currentYear):
+
+    f = open('CalendarSaveData', 'r')
+    # data = json.load(f)
+    top = Toplevel()
+    f1 = Frame(top, width=400, height=200)
+    f1.grid(row=0, column=0, rowspan=2, columnspan=2)
+
+    menu = Menubutton(top)
+    menu.grid(row=2, column=0)
+
+    timeCode = convertDateToCode(currentMonth, day, currentYear)
     #print("timeCode" + str(timeCode))
 
     counter = 0
@@ -48,8 +61,8 @@ def callback(day, currentMonth, currentYear):
         print(line[:10])
         if timeCode == line[:10]:
             #goalEntered = line[:11]
-            previousEvent = Label(top, text=line[11:])
-            previousEvent.grid(row=0, column=2)
+            previousEvent = Label(top, text=line[11:], wraplength=200)
+            previousEvent.grid(row=0, column=1, padx=3, pady=3, rowspan=2)
             print(line)
         counter += 1
 
@@ -58,20 +71,20 @@ def callback(day, currentMonth, currentYear):
     #print(currentYear)
 
     event = Entry(top)
-    event.grid(row=0, column=1)
-    enter = Button(top, text="Enter", command=lambda top=top, dayCode=dayCode, event=event, currentMonthCode=currentMonthCode, currentYear=currentYear: enterGoal(top, event, dayCode, currentMonthCode, currentYear))
-    enter.grid(row=1, column=1)
+    event.grid(row=0, column=0, padx=3, pady=3)
+    enter = Button(top, text="Enter", command=lambda top=top, day=day, event=event, currentMonth=currentMonth, currentYear=currentYear: enterGoal(top, event, day, currentMonth, currentYear))
+    enter.grid(row=1, column=0, padx=3, pady=3)
     top.mainloop()
     f.close()
 
-def enterGoal(top, event, dayCode, currentMonthCode, currentYear):
+def enterGoal(top, event, day, currentMonth, currentYear):
 
     with open('CalendarSaveData') as fin, open('temp', 'w') as fout:
         s = event.get()
         #print(s)
 
         lineWritten = 0
-        timeCode = currentMonthCode + "-" + dayCode + "-" + str(currentYear)
+        timeCode = convertDateToCode(currentMonth, day, currentYear)
         for line in fin:
             if timeCode == line[:10] and lineWritten == 0:
                 output = timeCode + ": " + s + "\n"
@@ -91,6 +104,18 @@ def enterGoal(top, event, dayCode, currentMonthCode, currentYear):
             fout.write(line)
 
     top.destroy()
+
+# Opportunity to increase performance by sending the max number of days and returning a list of colours
+def setPriority(i, currentMonth, currentYear):
+
+    timeCode = convertDateToCode(currentMonth, i, currentYear)
+
+    with open('CalendarSaveData') as fin:
+        for line in fin:
+            if timeCode == line[:10]:
+                return "RED"
+
+    return "WHITE"
 
 def prevMonth():
     global currentMonth
@@ -135,6 +160,8 @@ def changeMonth(currentMonth, numDays, startingDay, currentYear):
          day.append(Button(root, text=i + 1, command=lambda i=i, currentMonth=currentMonth, currentYear=currentYear:
             callback(i, currentMonth, currentYear), height=5, width=8))
 
+         day[i].config(background=setPriority(i, currentMonth, currentYear))
+
     counter = 0
     flag = 0
     colplaced = startingDay
@@ -162,10 +189,16 @@ def tick():
     clock = root.after(1000, tick)
 
 root = Tk()
+root.title("Personal Planner")
 day = []
 calendarRowShift = 3
 lengthOfCalendar = 5
 widthOfCalendar = 7
+
+#theme = Canvas(root, width=800, height=600)
+#theme.grid(row = 0, rowspan=9, column=0, columnspan=7)
+#photo = PhotoImage(file = 'theme.png')
+#theme.create_image(640, 360, image=photo)
 
 monthLabelString = month[currentMonth-1] + " " + str(currentYear)
 monthTitle = Label(root, text=monthLabelString, font=("Helvetica", 16))
@@ -195,12 +228,10 @@ friday.grid(row=2, column=5)
 saturday = Label(root, text="Saturday")
 saturday.grid(row=2, column=6)
 
-
 tick()
 
 counter = 0
 colplaced, numDays = calendar.monthrange(currentYear, currentMonth)
-
 colplaced = weekAdjustment(colplaced)
 
 print("NumDays " + str(numDays))
@@ -209,6 +240,8 @@ print("StartDay " + str(colplaced))
 for i in range(numDays):
     day.append(Button(root, text=i + 1, command=lambda i=i, currentMonth=currentMonth, currentYear=currentYear:
     callback(i, currentMonth, currentYear), height=5, width=8))
+
+    day[i].config(background=setPriority(i, currentMonth, currentYear))
 
 for x in range(5):
     for y in range(7):
